@@ -35,7 +35,7 @@ jobs:
 
     - name: Instalar pacotes R, se necessário
       run: |
-        R -e 'packages <- c( "httr");
+        R -e 'packages <- c( "httr","tidyverse", "httr", "jsonlite", "aws.s3", "arrow");
               missing <- setdiff(packages, rownames(installed.packages()));
               if(length(missing) > 0) install.packages(missing, dependencies=TRUE)'
 
