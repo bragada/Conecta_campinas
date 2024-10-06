@@ -1,4 +1,3 @@
-install.packages("janitor")
 library(httr)
 library(jsonlite)
 library(janitor)
