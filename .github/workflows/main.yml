@@ -17,7 +17,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: ~/.R/library
-        key: ${{ runner.os }}-R-${{ hashFiles('**/DESCRIPTION') }}-package-cache
+        key: ${{ runner.os }}-R-package-cache-${{ github.run_id }}
         restore-keys: |
           ${{ runner.os }}-R-
       env:
