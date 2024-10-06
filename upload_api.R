@@ -622,7 +622,11 @@ sgi_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
     filter(!is.na(data_hora)) %>% 
     left_join(
       #fst::read_fst("C:/Users/hk/HD_Externo/Conecta/atendimentos.fst") %>% 
-      arrow::read_parquet("atendimentos.parquet") %>% 
+     s3read_using(
+      FUN = arrow::read_parquet,
+      object = "tt_atendimentos.parquet",
+      bucket = "automacao-conecta"
+    ) %>% 
         select(no_atendimento,equipe,status_at = atendimento) %>% 
         mutate(no_atendimento = as.character(no_atendimento))
       , by = c("atendimento" = "no_atendimento"))
