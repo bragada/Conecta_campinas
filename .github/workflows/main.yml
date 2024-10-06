@@ -48,4 +48,4 @@ jobs:
 
     - name: Executar script R
       run: |
-        Rscript upload.api.R
+        Rscript upload_api.R
