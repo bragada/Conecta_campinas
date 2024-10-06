@@ -621,7 +621,6 @@ sgi_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
     )  %>%
     filter(!is.na(data_hora)) %>% 
     left_join(
-      #fst::read_fst("C:/Users/hk/HD_Externo/Conecta/atendimentos.fst") %>% 
      s3read_using(
       FUN = arrow::read_parquet,
       object = "tt_atendimentos.parquet",
