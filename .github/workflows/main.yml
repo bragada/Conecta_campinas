@@ -33,18 +33,17 @@ jobs:
         mkdir -p ~/.R/library
         echo "R_LIBS_USER=~/.R/library" >> ~/.Renviron
 
-    - name: Instalar pacotes R, se necessário
-      run: |
-        R -e 'packages <- c( "httr","tidyverse", "httr", "jsonlite", "aws.s3", "arrow");
-              missing <- setdiff(packages, rownames(installed.packages()));
-              if(length(missing) > 0) install.packages(missing, dependencies=TRUE)'
-
     - name: Definir variáveis de ambiente do AWS
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+        TZ: ${{ secrets.TZ }}
       run: |
-        echo "AWS_ACCESS_KEY_ID="AKIAZXAS4GOK2EW22DO7"${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.Renviron
-        echo "AWS_SECRET_ACCESS_KEY="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"${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.Renviron
-        echo "AWS_DEFAULT_REGION="sa-east-1"${{ secrets.AWS_DEFAULT_REGION }}" >> ~/.Renviron
-        echo "TZ="America/Sao_Paulo"${{ secrets.TZ }}" >> ~/.Renviron
+        echo "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" >> ~/.Renviron
+        echo "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" >> ~/.Renviron
+        echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" >> ~/.Renviron
+        echo "TZ=${TZ}" >> ~/.Renviron
 
     - name: Executar script R
       run: |
