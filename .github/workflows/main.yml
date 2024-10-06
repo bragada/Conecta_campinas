@@ -3,6 +3,8 @@ name: Run Campinas Script Every 30 Minutes
 on:
   schedule:
     - cron: '*/30 * * * *' # Executa a cada 30 minutos
+  workflow_dispatch:         # Adiciona a opção de execução manual
+
 
 jobs:
   run-campinas-script:
