@@ -7,7 +7,7 @@
 
 # Lista de pacotes necessários
 #required_packages <- c("httr", "jsonlite", "janitor", "tidyverse", "aws.s3", "arrow")
-packages <- c( "httr","tidyverse", "httr", "jsonlite", "aws.s3", "arrow");
+packages <- c( "httr","tidyverse", "httr", "jsonlite", "aws.s3", "arrow","janitor");
               missing <- setdiff(packages, rownames(installed.packages()));
               if(length(missing) > 0) install.packages(missing, dependencies=TRUE)
 ## Verificação e instalação dos pacotes
