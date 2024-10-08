@@ -386,6 +386,7 @@ p_moni_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
       longitude_total
     ) %>% 
     mutate(
+      bairro = "Sem Informação",
       data_limite_para_atendimento = as.POSIXct(strptime(paste(data_limite_atendimento,hora_limite_atendimento),"%d/%m/%Y %H:%M")),
       #recebida =  as.POSIXct(strptime(recebida,"%d/%m/%Y %H:%M")),
       data_limite =data_limite_para_atendimento,
