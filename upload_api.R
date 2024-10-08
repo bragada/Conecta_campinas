@@ -372,10 +372,15 @@ p_moni_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
   
   p_moni <- dados %>% 
     clean_names() %>%
+    mutate(
+      nome_bairro = ifelse("nome_bairro" %in% names(dados),nome_bairro,"Sem Informação"),
+      latitude_total = ifelse("latitude_total" %in% names(dados),latitude_total,NA),
+      longitude_total = ifelse("longitude_total" %in% names(dados),latitude_total,NA)
+    ) %>% 
     select(
       equipe = desc_equipe,
       tipo_de_ocorrencia = desc_tipo_ocorrencia,
-      #bairro = nome_bairro,
+      bairro = nome_bairro,
       endereco = endereco_livre,
       protocolo = numero_protocolo,
       id_ordem_servico,
