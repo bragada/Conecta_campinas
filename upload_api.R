@@ -375,7 +375,7 @@ p_moni_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
     select(
       equipe = desc_equipe,
       tipo_de_ocorrencia = desc_tipo_ocorrencia,
-      bairro = nome_bairro,
+      #bairro = nome_bairro,
       endereco = endereco_livre,
       protocolo = numero_protocolo,
       id_ordem_servico,
