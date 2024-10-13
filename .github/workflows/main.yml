@@ -27,6 +27,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libharfbuzz-dev libfribidi-dev libfontconfig1-dev libfreetype6-dev libicu-dev
+        sudo apt-get install -y libicu70  # Forçar instalação da versão 70 do ICU
 
     - name: Instalar R
       run: |
