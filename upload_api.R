@@ -533,7 +533,7 @@ oa_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
            data_reclamacao = as.Date(data_reclamacao,"%d/%m/%Y"))
   
   
-  arrow::write_parquet(oa, "t_ocorrencias_autorizar.parquet")
+  arrow::write_parquet(oa, "tt_ocorrencias_autorizar.parquet")
   
   put_object(
     file = "tt_ocorrencias_autorizar.parquet",
