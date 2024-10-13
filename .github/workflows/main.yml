@@ -3,7 +3,7 @@ name: Run R Script with Cache
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/15 * * * *'  # Executar a cada 30 minutos
+    - cron: '*/15 * * * *'  # Executar a cada 15 minutos
 
 jobs:
   build:
@@ -27,6 +27,11 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libharfbuzz-dev libfribidi-dev libfontconfig1-dev libfreetype6-dev
+
+    - name: Instalar R
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y r-base
 
     - name: Configurar diretório de bibliotecas R
       run: |
