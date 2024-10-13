@@ -12,7 +12,7 @@ jobs:
     steps:
     - name: Configurar repositório
       uses: actions/checkout@v2
-      
+
     - name: Configurar cache para pacotes R
       uses: actions/cache@v3
       with:
@@ -33,14 +33,18 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y r-base
 
-    - name: Reinstalar stringi a partir da fonte
-      run: |
-        Rscript -e 'install.packages("stringi", type = "source")'
-
-    - name: Configurar diretório de bibliotecas R
+    - name: Criar e configurar diretório de bibliotecas R
       run: |
         mkdir -p ~/.R/library
         echo "R_LIBS_USER=~/.R/library" >> ~/.Renviron
+      env:
+        R_LIBS_USER: ~/.R/library
+
+    - name: Reinstalar stringi a partir da fonte
+      run: |
+        Rscript -e 'install.packages("stringi", type = "source")'
+      env:
+        R_LIBS_USER: ~/.R/library
 
     - name: Definir variáveis de ambiente do AWS
       env:
@@ -57,3 +61,5 @@ jobs:
     - name: Executar script R
       run: |
         Rscript upload_api.R
+      env:
+        R_LIBS_USER: ~/.R/library
