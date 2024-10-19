@@ -372,23 +372,18 @@ p_moni_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
   
   p_moni <- dados %>% 
     clean_names() %>%
-    mutate(
-      nome_bairro = ifelse("nome_bairro" %in% names(dados),nome_bairro,"Sem Informação"),
-      latitude_total = ifelse("latitude_total" %in% names(dados),latitude_total,NA),
-      longitude_total = ifelse("longitude_total" %in% names(dados),latitude_total,NA)
-    ) %>% 
     select(
-      equipe = desc_equipe,
-      tipo_de_ocorrencia = desc_tipo_ocorrencia,
-      bairro = nome_bairro,
-      endereco = endereco_livre,
-      protocolo = numero_protocolo,
-      id_ordem_servico,
-      data_reclamacao,
-      hora_limite_atendimento,
-      data_limite_atendimento,
-      latitude_total,
-      longitude_total
+      equipe = any_of("desc_equipe"),
+      tipo_de_ocorrencia = any_of("desc_tipo_ocorrencia"),
+      bairro = any_of("nome_bairro"),
+      endereco = any_of("endereco_livre"),
+      protocolo = any_of("numero_protocolo"),
+      id_ordem_servico = any_of("id_ordem_servico"),
+      data_reclamacao = any_of("data_reclamacao"),
+      hora_limite_atendimento = any_of("hora_limite_atendimento"),
+      data_limite_atendimento = any_of("data_limite_atendimento"),
+      latitude_total = any_of("latitude_total"),
+      longitude_total = any_of("longitude_total")
     ) %>% 
     mutate(
       bairro = "Sem Informação",
