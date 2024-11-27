@@ -274,7 +274,7 @@ p_oc_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
     .[[raiz_2]]
   
   
-  if (length(dados) <= 10) {
+  if (length(dados) <= 3) {
     print("A base de dados contém 10 ou menos observações. Não será feito o upload.")
     return(NULL)
   }
@@ -365,7 +365,7 @@ p_moni_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
     .[[raiz_2]]
   
   
-  if (length(dados) <= 10) {
+  if (length(dados) <= 3) {
     message("A base de dados contém 10 ou menos observações. Não será feito o upload.")
     return(NULL)
   }
