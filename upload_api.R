@@ -9,8 +9,8 @@ library(tidyverse)
 library(aws.s3)
 library(arrow)
 
-credenciais <- paste0(Sys.getenv("USERNAME"), ":",
-                      Sys.getenv("PASSWORD")) %>%
+credenciais <- paste0(Sys.getenv("USUARIO_CAMPINAS"), ":",
+                      Sys.getenv("SENHA_CAMPINAS")) %>%
       base64_enc() %>% 
       paste("Basic", .)
 
