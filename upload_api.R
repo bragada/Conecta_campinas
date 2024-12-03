@@ -1,3 +1,7 @@
+#install.packages(c("httr", "jsonlite", "janitor", "tidyverse", "aws.s3", "arrow"))
+install.packages("base64enc")
+library(base64enc)
+
 library(httr)
 library(jsonlite)
 library(janitor)
@@ -5,15 +9,32 @@ library(tidyverse)
 library(aws.s3)
 library(arrow)
 
+credenciais <- paste0(Sys.getenv("USERNAME"), ":", Sys.getenv("PASSWORD")) %>%
+      base64_enc() %>% 
+      paste("Basic", .)
 
 `%!in%` <- Negate(`%in%`) 
-
-# Atendimentos  ----
+print("vamo vê o que vai dar")
 at_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
+
+
+  corpo_requisicao <- list(
+    CMD_ID_STATUS_SOLICITACAO=-1,
+    CMD_IDS_PARQUE_SERVICO="1,2",
+    CMD_DATA_RECLAMACAO="01/03/2023",
+    CMD_APENAS_EM_ABERTO=0
+    )
+
+  response <- POST(
+     url,
+     add_headers(
+      `Authorization` = credenciais,
+      `Accept-Encoding` = "gzip"
+    ),
+      body = corpo_requisicao,
+      encode = "json"
+  )
   
-  response <- GET(url, add_headers(`Accept-Encoding` = "gzip"))
-  
-  dados <- fromJSON(content(response, "text"))
   if (status_code(response) != 200) {
     message("Erro ao acessar a API de ",nome ,". Status code: ", status_code(response))
     return(NULL)
@@ -95,7 +116,7 @@ at_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
     file = "tt_atendimentos.parquet",
     object = "tt_atendimentos.parquet",
     bucket = "automacao-conecta",
-    region = 'sa-east-1'
+    region = "sa-east-1"
   )
   
 }
@@ -107,88 +128,96 @@ at_extrai_json_api(nome = "Atendimentos",
                    url= "https://conectacampinas.exati.com.br/guia/command/conectacampinas/ConsultarAtendimentoPontoServico.json?CMD_ID_PARQUE_SERVICO=2&CMD_DATA_INICIO=01/03/2023&auth_token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJnaW92YW5uYS5hbmRyYWRlQGV4YXRpLmNvbS5iciIsImp0aSI6IjMxOCIsImlhdCI6MTcyNjcwMzY5Nywib3JpZ2luIjoiR1VJQS1TRVJWSUNFIn0.N-NFG7oJSzfzhyApzR9VB5P0AqSmDd_CqZrAEtlZsEs"
 ) 
 print('Atendimentos - Ok')
-# ----
 
-# Solicitações ----
+
+
+
 sol_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
-  
-  
-  
-  
-  response <- GET(url, add_headers(`Accept-Encoding` = "gzip"))
-  
-  dados <- fromJSON(content(response, "text"))
-  if (status_code(response) != 200) {
-    message("Erro ao acessar a API de ",nome ,". Status code: ", status_code(response))
-    return(NULL)
-  } 
-  
-  
-  dados <- fromJSON(content(response, "text")) %>% 
-    .[["RAIZ"]] %>%
-    .[[raiz_1]] %>%
-    .[[raiz_2]]
-  
-  
-  if (length(dados) <= 10) {
-    message("A base de dados contém 10 ou menos observações. Não será feito o upload.")
-    return(NULL)
-  }
-  
-  solicitacoes <- dados %>% 
-    clean_names() %>%
-    select(protocolo = numero_protocolo,
-           data_reclamacao,
-           status = desc_status_solicitacao,
-           tempo_restante = desc_prazo_restante,
-           data_reclamacao,
-           id_ocorrencia,
-           possui_atendimento_anterior,
-           endereco_livre_solicitacao,
-           origem_ocorrencia = desc_tipo_origem_solicitacao,
-           pontos
-    ) %>% 
-    mutate(data_reclamacao = as.Date(data_reclamacao,"%d/%m/%Y"),
-           semana_marco = week(data_reclamacao)-week(as.Date("2023-02-25")),
-           mes = month(data_reclamacao),
-           mes = case_when(
-             mes == 1 ~ "Janeiro",
-             mes == 2 ~ "Fevereiro",
-             mes == 3 ~ "Março",
-             mes == 4 ~ "Abril",
-             mes == 5 ~ "Maio",
-             mes == 6 ~ "Junho",
-             mes == 7 ~ "Julho",
-             mes == 8 ~ "Agosto",
-             mes == 9 ~ "Setembro",
-             mes == 10 ~ "Outubro",
-             mes == 11 ~ "Novembro",
-             mes == 12 ~ "Dezembro",
-           ),
-           mes = factor(mes,levels = c("Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro")),
-           dia_semana = wday(data_reclamacao,label = T),
-           dia_semana = case_when(
-             dia_semana %in% c("dom","Sun") ~ "Dom",
-             dia_semana %in% c("seg","Mon") ~ "Seg",
-             dia_semana %in% c("ter","Tue") ~ "Ter",
-             dia_semana %in% c("qua","Wed") ~ "Qua",
-             dia_semana %in% c("qui","Thu") ~ "Qui",
-             dia_semana %in% c("sex","Fri") ~ "Sex",
-             dia_semana %in% c("sab","Sat") ~ "Sab"
-             
-           ),
-           semana = week(data_reclamacao) - week(floor_date(data_reclamacao,"month")) +1) 
-  
-  
-  arrow::write_parquet(solicitacoes, "tt_solicitacoes.parquet")
-  
-  put_object(
-    file = "tt_solicitacoes.parquet",
-    object = "tt_solicitacoes.parquet",
-    bucket = "automacao-conecta",
-    region = 'sa-east-1'
-  )
-  
+    
+    
+    corpo_requisicao <- list(
+        CMD_ID_STATUS_SOLICITACAO = -1,
+        CMD_IDS_PARQUE_SERVICO = "1,2",
+        CMD_DATA_RECLAMACAO = "01/03/2023",
+        CMD_APENAS_EM_ABERTO = 0
+    )
+    
+    response <- POST(
+        url,
+        add_headers(
+            `Authorization` = credenciais,
+            `Accept-Encoding` = "gzip"
+        ),
+        body = corpo_requisicao,
+        encode = "json"
+    )
+    
+    if (status_code(response) != 200) {
+        message("Erro ao acessar a API de ",nome ,". Status code: ", status_code(response))
+        return(NULL)
+    } 
+    
+    
+    dados <- fromJSON(content(response, "text")) %>% 
+        .[["RAIZ"]] %>%
+        .[[raiz_1]] %>%
+        .[[raiz_2]]
+    
+
+ 
+    solicitacoes <- dados %>% 
+        clean_names() %>%
+        select(protocolo = numero_protocolo,
+               data_reclamacao,
+               status = desc_status_solicitacao,
+               tempo_restante = desc_prazo_restante,
+               id_ocorrencia,
+               possui_atendimento_anterior,
+               endereco_livre_solicitacao,
+               origem_ocorrencia = desc_tipo_origem_solicitacao,
+               pontos
+        ) %>% 
+        mutate(data_reclamacao = as.Date(data_reclamacao,"%d/%m/%Y"),
+               semana_marco = week(data_reclamacao)-week(as.Date("2023-02-25")),
+               mes = month(data_reclamacao),
+               mes = case_when(
+                   mes == 1 ~ "Janeiro",
+                   mes == 2 ~ "Fevereiro",
+                   mes == 3 ~ "Março",
+                   mes == 4 ~ "Abril",
+                   mes == 5 ~ "Maio",
+                   mes == 6 ~ "Junho",
+                   mes == 7 ~ "Julho",
+                   mes == 8 ~ "Agosto",
+                   mes == 9 ~ "Setembro",
+                   mes == 10 ~ "Outubro",
+                   mes == 11 ~ "Novembro",
+                   mes == 12 ~ "Dezembro"
+               ),
+               mes = factor(mes,levels = c("Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro")),
+               dia_semana = wday(data_reclamacao,label = T),
+               dia_semana = case_when(
+                   dia_semana %in% c("dom","Sun") ~ "Dom",
+                   dia_semana %in% c("seg","Mon") ~ "Seg",
+                   dia_semana %in% c("ter","Tue") ~ "Ter",
+                   dia_semana %in% c("qua","Wed") ~ "Qua",
+                   dia_semana %in% c("qui","Thu") ~ "Qui",
+                   dia_semana %in% c("sex","Fri") ~ "Sex",
+                   dia_semana %in% c("sab","Sat") ~ "Sab"
+                   
+               ),
+               semana = week(data_reclamacao) - week(floor_date(data_reclamacao,"month")) +1) 
+    
+    
+    arrow::write_parquet(solicitacoes, "tt_solicitacoes.parquet")
+    
+    put_object(
+        file = "tt_solicitacoes.parquet",
+        object = "tt_solicitacoes.parquet",
+        bucket = "automacao-conecta",
+        region = 'sa-east-1'
+    )
+    
 }
 
 sol_extrai_json_api(nome = "Solicitações",
@@ -197,16 +226,33 @@ sol_extrai_json_api(nome = "Solicitações",
                     url= "https://conectacampinas.exati.com.br/guia/command/conectacampinas/Solicitacoes.json?CMD_ID_STATUS_SOLICITACAO=-1&CMD_IDS_PARQUE_SERVICO=1,2&CMD_DATA_RECLAMACAO=01/03/2023&CMD_APENAS_EM_ABERTO=0&auth_token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJnaW92YW5uYS5hbmRyYWRlQGV4YXRpLmNvbS5iciIsImp0aSI6IjMxOCIsImlhdCI6MTcyNjcwMzY5Nywib3JpZ2luIjoiR1VJQS1TRVJWSUNFIn0.N-NFG7oJSzfzhyApzR9VB5P0AqSmDd_CqZrAEtlZsEs"
 ) 
 print('Solicitações - Ok')
-
 # ----
+
 
 # Ocorrencias/Solicitacoes Pendentes Realizadas ----
 osp_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
   
   
-  response <- GET(url, add_headers(`Accept-Encoding` = "gzip"))
+corpo_requisicao <- list(
+  CMD_ID_PARQUE_SERVICO = "[1,2]",
+  CMD_AGRUPAMENTO = "SOLICITACAO_PONTO_SERVICO",
+  CMD_STATUS = "PENDENTES",
+  CMD_ORIGEM_ATENDIMENTO = "TODOS",
+  CMD_TIPO_SOLICITACAO = "TODOS",
+  CMD_DATA_INICIO = format(Sys.Date() - 90, "%d/%m/%Y"),
+  CMD_DATA_FIM = format(Sys.Date(), "%d/%m/%Y")
+)
+      
+  response <- POST(
+     url,
+     add_headers(
+      `Authorization` = credenciais,
+      `Accept-Encoding` = "gzip"
+    ),
+      body = corpo_requisicao,
+      encode = "json"
+  )
   
-  dados <- fromJSON(content(response, "text"))
   if (status_code(response) != 200) {
     message("Erro ao acessar a API de ",nome ,". Status code: ", status_code(response))
     return(NULL)
@@ -253,15 +299,28 @@ osp_extrai_json_api(nome = "Ocorrencias/Solicitacoes Pendentes Realizadas ",
                     raiz_2 = "OCORRENCIA_SOLICITACAO",
                     url = paste0("https://conectacampinas.exati.com.br/guia/command/conectacampinas/ConsultarOcorrenciasSolicitacoesPendentesRealizadas.json?CMD_ID_PARQUE_SERVICO=[1,2]&CMD_AGRUPAMENTO=SOLICITACAO_PONTO_SERVICO&CMD_STATUS=PENDENTES&CMD_ORIGEM_ATENDIMENTO=TODOS&CMD_TIPO_SOLICITACAO=TODOS&CMD_DATA_INICIO=",format(Sys.Date()-90,"%d/%m/%Y"),"&CMD_DATA_FIM=",format(Sys.Date(),"%d/%m/%Y"),"&auth_token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJnaW92YW5uYS5hbmRyYWRlQGV4YXRpLmNvbS5iciIsImp0aSI6IjMxOCIsImlhdCI6MTcyNjcwMzY5Nywib3JpZ2luIjoiR1VJQS1TRVJWSUNFIn0.N-NFG7oJSzfzhyApzR9VB5P0AqSmDd_CqZrAEtlZsEs")
 )
-print('  Ocorrencias/Solicitacoes - Ok')   
+print('Ocorrencias/Solicitacoes - Ok')   
 # ----
+
 
 # Painel Ocorrências ----
 p_oc_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
   
-  response <- GET(url, add_headers(`Accept-Encoding` = "gzip"))
+corpo_requisicao <- list(
+  CMD_IDS_PARQUE_SERVICO = 2,
+  CMD_DENTRO_DE_AREA = -1,
+  auth_token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJnaW92YW5uYS5hbmRyYWRlQGV4YXRpLmNvbS5iciIsImp0aSI6IjMxOCIsImlhdCI6MTcyNjcwMzY5Nywib3JpZ2luIjoiR1VJQS1TRVJWSUNFIn0.N-NFG7oJSzfzhyApzR9VB5P0AqSmDd_CqZrAEtlZsEs"
+)
+   response <- POST(
+     url,
+     add_headers(
+      `Authorization` = credenciais,
+      `Accept-Encoding` = "gzip"
+    ),
+      body = corpo_requisicao,
+      encode = "json"
+  )
   
-  dados <- fromJSON(content(response, "text"))
   if (status_code(response) != 200) {
     print("Erro ao acessar a API de ",nome ,". Status code: ", status_code(response))
     return(NULL)
@@ -347,13 +406,25 @@ print(' Painel Ocorrências - Ok')
 
 # ----
 
+
 # Painel Monitoramento ----
 p_moni_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
-  
-  response <- GET(url, add_headers(`Accept-Encoding` = "gzip"))
-  
-  dados <- fromJSON(content(response, "text"))
-  if (status_code(response) != 200) {
+
+  corpo_requisicao <- list(
+    CMD_ID_PARQUE_SERVICO = 2
+  )
+      
+  response <- POST(
+     url,
+     add_headers(
+      `Authorization` = credenciais,
+      `Accept-Encoding` = "gzip"
+    ),
+      body = corpo_requisicao,
+      encode = "json"
+  )  
+
+if (status_code(response) != 200) {
     message("Erro ao acessar a API de ",nome ,". Status code: ", status_code(response))
     return(NULL)
   } 
@@ -365,10 +436,7 @@ p_moni_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
     .[[raiz_2]]
   
   
-  if (length(dados) <= 3) {
-    message("A base de dados contém 10 ou menos observações. Não será feito o upload.")
-    return(NULL)
-  }
+
   
   p_moni <- dados %>% 
     clean_names() %>%
@@ -427,10 +495,25 @@ print(' Painel Monitoramento - Ok')
 
 # Ordens de Serviço ----
 os_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
-  
-  response <- GET(url, add_headers(`Accept-Encoding` = "gzip"))
-  
-  dados <- fromJSON(content(response, "text"))
+
+
+corpo_requisicao <- list(
+  CMD_ID_STATUS_ORDEM_SERVICO = -1,
+  CMD_DATA = "01/01/2021",
+  CMD_ID_PARQUE_SERVICO = 2
+)
+      
+  response <- POST(
+     url,
+     add_headers(
+      `Authorization` = credenciais,
+      `Accept-Encoding` = "gzip"
+    ),
+      body = corpo_requisicao,
+      encode = "json"
+  )  
+
+      
   if (status_code(response) != 200) {
     message("Erro ao acessar a API de ",nome ,". Status code: ", status_code(response))
     return(NULL)
@@ -489,13 +572,27 @@ print(' Ordens de Serviço - Ok')
 
 # ----
 
+
 # Ocorrências Autorizar ----
 oa_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
   
   
-  response <- GET(url, add_headers(`Accept-Encoding` = "gzip"))
+  corpo_requisicao <- list(
+   CMD_IDS_PARQUE_SERVICO = 2,
+   CMD_PAINEL_NOVO = 1
+  )
+      
+  response <- POST(
+     url,
+     add_headers(
+      `Authorization` = credenciais,
+      `Accept-Encoding` = "gzip"
+    ),
+      body = corpo_requisicao,
+      encode = "json"
+  )  
+
   
-  dados <- fromJSON(content(response, "text"))
   if (status_code(response) != 200) {
     message("Erro ao acessar a API de ",nome ,". Status code: ", status_code(response))
     return(NULL)
@@ -545,13 +642,29 @@ oa_extrai_json_api(nome = "Ocorrências Autorizar",
                    url = "https://conectacampinas.exati.com.br/guia/command/conectacampinas/ConsultarOcorrenciasAutorizar.json?CMD_IDS_PARQUE_SERVICO=2&CMD_PAINEL_NOVO=1&auth_token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJnaW92YW5uYS5hbmRyYWRlQGV4YXRpLmNvbS5iciIsImp0aSI6IjMxOCIsImlhdCI6MTcyNjcwMzY5Nywib3JpZ2luIjoiR1VJQS1TRVJWSUNFIn0.N-NFG7oJSzfzhyApzR9VB5P0AqSmDd_CqZrAEtlZsEs")
 print('  Ocorrências Autorizar  - Ok')                
 # ----
-
 # ATENDIMENTO QUANTO AO PRAZO ----
 sgi_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
-  
-  response <- GET(url, add_headers(`Accept-Encoding` = "gzip"))
-  
-  dados <- fromJSON(content(response, "text"))
+   
+    corpo_requisicao <- list(
+        CMD_ID_PARQUE_SERVICO = 2,
+        CMD_DATA_INICIAL_FILTRO = "01/01/2021",
+        CMD_DATA_FINAL_FILTRO = "01/01/2040",
+        CMD_ID_SEM_REGIAO = -1,
+        CMD_DETALHADO = 1,
+        CMD_CONFIRMADOS = 1
+    )
+    
+    response <- POST(
+        url,
+        add_headers(
+            `Authorization` = credenciais,
+            `Accept-Encoding` = "gzip"
+        ),
+        body = corpo_requisicao,
+        encode = "json"
+    )
+
+      
   if (status_code(response) != 200) {
     message("Erro ao acessar a API de ",nome ,". Status code: ", status_code(response))
     return(NULL)
@@ -563,11 +676,7 @@ sgi_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
     .[[raiz_1]] %>%
     .[[raiz_2]]
   
-  
-  if (length(dados) <= 10) {
-    message("A base de dados contém 10 ou menos observações. Não será feito o upload.")
-    return(NULL)
-  }
+
   
   sgi <- dados %>% 
     clean_names() %>% 
@@ -582,8 +691,6 @@ sgi_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
       origem_da_ocorrencia = origem_ocorrencia,
       
     ) %>% 
-    #select(-x1) %>% 
-    #slice(-1) %>% 
     mutate(prazo = as.Date(prazo,"%d/%m/%Y"),
            data_atendimento = as.Date(data_atendimento,"%d/%m/%Y"),
            mes = month(data_atendimento),
@@ -646,17 +753,30 @@ sgi_extrai_json_api(nome = "ATENDIMENTO QUANTO AO PRAZO",
                     raiz_1 = "ATENDIMENTOS",
                     raiz_2 = "ATENDIMENTO",
                     url = "https://conectacampinas.exati.com.br/guia/command/conectacampinas/ConsultarPrazosAtendimento.json?CMD_ID_PARQUE_SERVICO=2&CMD_DATA_INICIAL_FILTRO=01/01/2021&CMD_DATA_FINAL_FILTRO=01/01/2040&CMD_ID_SEM_REGIAO=-1&CMD_DETALHADO=1&CMD_CONFIRMADOS=1&auth_token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJnaW92YW5uYS5hbmRyYWRlQGV4YXRpLmNvbS5iciIsImp0aSI6IjMxOCIsImlhdCI6MTcyNjcwMzY5Nywib3JpZ2luIjoiR1VJQS1TRVJWSUNFIn0.N-NFG7oJSzfzhyApzR9VB5P0AqSmDd_CqZrAEtlZsEs")
-print('  ATENDIMENTO QUANTO AO PRAZO  - Ok')                
+print('ATENDIMENTO QUANTO AO PRAZO  - Ok')                
 
 # ----
+
 
 # PONTOS MODERNIZADOS -----
 mod_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
   
-  
-  response <- GET(url, add_headers(`Accept-Encoding` = "gzip"))
-  
-  dados <- fromJSON(content(response, "text"))
+  corpo_requisicao <- list(
+  CMD_IDS_PARQUE_SERVICO = 2,
+  CMD_MODERNIZACAO = 2,
+  CMD_TIPO_CALCULO = 0
+)
+  response <- POST(
+     url,
+     add_headers(
+      `Authorization` = credenciais,
+      `Accept-Encoding` = "gzip"
+    ),
+      body = corpo_requisicao,
+      encode = "json"
+  )  
+
+      
   if (status_code(response) != 200) {
     message("Erro ao acessar a API de ",nome ,". Status code: ", status_code(response))
     return(NULL)
@@ -667,11 +787,11 @@ mod_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
     .[["RAIZ"]] %>%
     .[[raiz_1]] %>%
     .[[raiz_2]]
-  dados <- fromJSON(content( GET('https://conectacampinas.exati.com.br/guia/command/conectacampinas/ConsultarPontosModernizacaoCompleto.json?CMD_IDS_PARQUE_SERVICO=2&CMD_MODERNIZACAO=2&CMD_TIPO_CALCULO=0&auth_token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJnaW92YW5uYS5hbmRyYWRlQGV4YXRpLmNvbS5iciIsImp0aSI6IjMxOCIsImlhdCI6MTcyNjcwMzY5Nywib3JpZ2luIjoiR1VJQS1TRVJWSUNFIn0.N-NFG7oJSzfzhyApzR9VB5P0AqSmDd_CqZrAEtlZsEs', add_headers(`Accept-Encoding` = "gzip"))
-                             , "text")) %>% 
-    .[["RAIZ"]] %>%
-    .[['PONTOS_MODERNIZACAO']] %>%
-    .[['PONTO_MODERNIZACAO']]
+  #dados <- fromJSON(content( GET('https://conectacampinas.exati.com.br/guia/command/conectacampinas/ConsultarPontosModernizacaoCompleto.json?CMD_IDS_PARQUE_SERVICO=2&CMD_MODERNIZACAO=2&CMD_TIPO_CALCULO=0&auth_token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJnaW92YW5uYS5hbmRyYWRlQGV4YXRpLmNvbS5iciIsImp0aSI6IjMxOCIsImlhdCI6MTcyNjcwMzY5Nywib3JpZ2luIjoiR1VJQS1TRVJWSUNFIn0.N-NFG7oJSzfzhyApzR9VB5P0AqSmDd_CqZrAEtlZsEs', add_headers(`Accept-Encoding` = "gzip"))
+  #                           , "text")) %>% 
+  #  .[["RAIZ"]] %>%
+  #  .[['PONTOS_MODERNIZACAO']] %>%
+  #  .[['PONTO_MODERNIZACAO']]
   
   
   if (length(dados) <= 10) {
@@ -755,12 +875,24 @@ print('  PONTOS MODERNIZADOS   - Ok')
 
 # ----
 
+
 # OBRAS ----
 obras_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
-  
-  response <- GET(url, add_headers(`Accept-Encoding` = "gzip"))
-  
-  dados <- fromJSON(content(response, "text"))
+
+corpo_requisicao <- list(
+  CMD_OBRAS_ATRASADAS = 0,
+  CMD_ID_PARQUE_SERVICO = "1,2"
+)
+
+ response <- POST(
+     url,
+     add_headers(
+      `Authorization` = credenciais,
+      `Accept-Encoding` = "gzip"
+    ),
+      body = corpo_requisicao,
+      encode = "json"
+  )    
   if (status_code(response) != 200) {
     message("Erro ao acessar a API de ",nome ,". Status code: ", status_code(response))
     return(NULL)
@@ -789,7 +921,7 @@ obras_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
   arrow::write_parquet(obras, "tt_obras.parquet")
   
   put_object(
-    file = "tt_mod_materiais.parquet",
+    file = "tt_obras.parquet",
     object = "tt_obras.parquet",
     bucket = "automacao-conecta",
     region = 'sa-east-1'
