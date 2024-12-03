@@ -35,19 +35,16 @@ at_extrai_json_api <- function(nome,url,raiz_1,raiz_2){
       body = corpo_requisicao,
       encode = "json"
   )
-  
+  print(response)
   if (status_code(response) != 200) {
     message("Erro ao acessar a API de ",nome ,". Status code: ", status_code(response))
     return(NULL)
   } 
   
   
-  dados <- fromJSON(content(response, "text")) %>% 
-    .[["RAIZ"]] %>%
-    .[[raiz_1]] %>%
-    .[[raiz_2]]
+  dados <- fromJSON(content(response, "text"))
   
-  
+  print(dados)
   if (length(dados) <= 10) {
     message("A base de dados contém 10 ou menos observações. Não será feito o upload.")
     return(NULL)
