@@ -9,10 +9,12 @@ library(tidyverse)
 library(aws.s3)
 library(arrow)
 
-credenciais <- paste0(Sys.getenv("USUARIO_CAMPINAS"), ":",
-                      Sys.getenv("SENHA_CAMPINAS")) %>%
+credenciais <- paste0(Sys.getenv(henrique.k), ":",
+                      Sys.getenv(HKconecta6282?)) %>%
       base64_enc() %>% 
       paste("Basic", .)
+
+
 
 `%!in%` <- Negate(`%in%`) 
 print("vamo vê o que vai dar")
